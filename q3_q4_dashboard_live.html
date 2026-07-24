@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Q3-Q4 2026 Trading Dashboard</title>
+<style>
+  :root{
+    --bg:#0b0f1a;
+    --panel:#121a2b;
+    --panel2:#182238;
+    --line:#26324c;
+    --txt:#eaf0fa;
+    --mut:#8592ab;
+    --blue:#4f9cf0;
+    --green:#35b981;
+    --gold:#e0a83c;
+    --purple:#9b7be0;
+    --red:#e05c5c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--txt);line-height:1.5;
+    padding:28px 18px 80px;
+  }
+  .wrap{max-width:1200px;margin:0 auto}
+
+  /* Top bar */
+  .topbar{
+    border:1px solid var(--line);border-radius:18px;
+    background:
+      radial-gradient(1000px 320px at 100% -30%, rgba(53,185,129,.13), transparent 60%),
+      radial-gradient(800px 320px at -10% 130%, rgba(79,156,240,.12), transparent 55%),
+      var(--panel);
+    padding:28px 32px;margin-bottom:24px;
+  }
+  .topbar h1{font-size:28px;font-weight:800;letter-spacing:-.4px}
+  .topbar .sub{color:var(--mut);font-size:14px;margin-top:6px}
+
+  .overall{display:flex;align-items:center;gap:22px;margin-top:24px;flex-wrap:wrap}
+  .ring{position:relative;width:104px;height:104px;flex-shrink:0}
+  .ring svg{transform:rotate(-90deg)}
+  .ring .pct{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:22px;font-weight:800;
+  }
+  .overall .meta{flex:1;min-width:180px}
+  .overall .meta .big{font-size:15px;font-weight:600}
+  .overall .meta .small{color:var(--mut);font-size:13px;margin-top:3px}
+
+  .money-strip{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
+  .mstat{
+    flex:1;min-width:140px;background:var(--panel2);border:1px solid var(--line);
+    border-radius:12px;padding:14px 16px;
+  }
+  .mstat .v{font-size:20px;font-weight:800}
+  .mstat .l{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px;margin-top:3px}
+  .mstat.g .v{color:var(--green)}
+  .mstat.o .v{color:var(--gold)}
+  .mstat.b .v{color:var(--blue)}
+
+  /* Payout tracker */
+  .payout-box{
+    border:1px solid var(--line);border-radius:16px;background:var(--panel);
+    padding:20px 22px;margin-bottom:24px;
+  }
+  .payout-box h2{font-size:16px;margin-bottom:4px}
+  .payout-box .h-sub{color:var(--mut);font-size:12.5px;margin-bottom:16px}
+  .paybar-track{height:14px;border-radius:8px;background:var(--panel2);overflow:hidden;border:1px solid var(--line)}
+  .paybar-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--blue));transition:width .5s ease;width:0}
+  .pay-row{display:flex;justify-content:space-between;font-size:12.5px;color:var(--mut);margin-top:8px}
+  .pay-months{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+  @media(max-width:640px){.pay-months{grid-template-columns:1fr 1fr}}
+  .pm{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:12px 14px;cursor:pointer;transition:.2s;user-select:none}
+  .pm:hover{border-color:var(--green)}
+  .pm.on{background:rgba(53,185,129,.12);border-color:var(--green)}
+  .pm .mo{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px}
+  .pm .amt{font-size:18px;font-weight:800;margin-top:3px}
+  .pm.on .amt{color:var(--green)}
+  .pm .st{font-size:11px;margin-top:4px;color:var(--mut)}
+  .pm.on .st{color:var(--green)}
+
+  /* Category grid */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:860px){.grid{grid-template-columns:1fr}}
+
+  .cat{border:1px solid var(--line);border-radius:16px;background:var(--panel);overflow:hidden}
+  .cat .head{padding:18px 20px;display:flex;align-items:center;gap:13px;border-bottom:1px solid var(--line)}
+  .cat .badge{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0}
+  .cat .head h2{font-size:16px;font-weight:700}
+  .cat .head .prog{font-size:12px;color:var(--mut);margin-top:2px}
+  .catbar{height:5px;background:var(--panel2)}
+  .catbar .f{height:100%;transition:width .4s ease;width:0}
+  .c1 .badge{background:rgba(79,156,240,.14);border:1px solid rgba(79,156,240,.35)}
+  .c2 .badge{background:rgba(53,185,129,.14);border:1px solid rgba(53,185,129,.35)}
+  .c3 .badge{background:rgba(224,168,60,.14);border:1px solid rgba(224,168,60,.35)}
+  .c4 .badge{background:rgba(155,123,224,.14);border:1px solid rgba(155,123,224,.35)}
+  .c1 .catbar .f{background:var(--blue)}
+  .c2 .catbar .f{background:var(--green)}
+  .c3 .catbar .f{background:var(--gold)}
+  .c4 .catbar .f{background:var(--purple)}
+
+  .cat ul{list-style:none;padding:10px 20px 18px}
+  .goal{
+    display:flex;gap:12px;align-items:flex-start;padding:11px 0;
+    border-bottom:1px dashed var(--line);cursor:pointer;user-select:none;
+  }
+  .goal:last-child{border-bottom:none}
+  .box{
+    width:20px;height:20px;border-radius:6px;border:2px solid var(--line);
+    flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;
+    transition:.2s;font-size:13px;color:#fff;
+  }
+  .c1 .goal.done .box{background:var(--blue);border-color:var(--blue)}
+  .c2 .goal.done .box{background:var(--green);border-color:var(--green)}
+  .c3 .goal.done .box{background:var(--gold);border-color:var(--gold)}
+  .c4 .goal.done .box{background:var(--purple);border-color:var(--purple)}
+  .g-body{flex:1}
+  .g-body .t{font-weight:600;font-size:14.5px;transition:.2s}
+  .goal.done .g-body .t{text-decoration:line-through;color:var(--mut)}
+  .g-body .d{color:var(--mut);font-size:12px;margin-top:2px}
+  .g-amt{font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;background:var(--panel2);border:1px solid var(--line)}
+  .g-amt.pos{color:var(--green)}
+  .g-amt.cost{color:var(--gold)}
+
+  /* footer controls */
+  .controls{display:flex;justify-content:space-between;align-items:center;margin-top:26px;flex-wrap:wrap;gap:14px}
+  .save-note{font-size:12px;color:var(--mut)}
+  .save-note b{color:var(--green)}
+  .reset{
+    background:transparent;border:1px solid var(--line);color:var(--mut);
+    padding:9px 16px;border-radius:9px;font-size:13px;cursor:pointer;transition:.2s;font-weight:600;
+  }
+  .reset:hover{border-color:var(--red);color:var(--red)}
+  footer{color:var(--mut);font-size:11.5px;text-align:center;margin-top:34px;line-height:1.7}
+
+  .loading{text-align:center;color:var(--mut);padding:60px 0;font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <h1>Q3-Q4 2026 Trading Dashboard</h1>
+    <div class="sub">Live goal tracker built on the zero-to-500K rebuild framework. Progress saves automatically.</div>
+
+    <div class="overall">
+      <div class="ring">
+        <svg width="104" height="104">
+          <circle cx="52" cy="52" r="46" fill="none" stroke="var(--panel2)" stroke-width="10"/>
+          <circle id="ringFill" cx="52" cy="52" r="46" fill="none" stroke="var(--green)" stroke-width="10"
+            stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="289"/>
+        </svg>
+        <div class="pct" id="overallPct">0%</div>
+      </div>
+      <div class="meta">
+        <div class="big" id="overallLabel">0 of 0 goals complete</div>
+        <div class="small">Check off goals as you hit them. Everything rolls up here.</div>
+      </div>
+    </div>
+
+    <div class="money-strip">
+      <div class="mstat g"><div class="v" id="paidVal">$0</div><div class="l">Payouts Banked</div></div>
+      <div class="mstat b"><div class="v">$500K</div><div class="l">Funding Target</div></div>
+      <div class="mstat o"><div class="v" id="oblVal">$0</div><div class="l">Obligations Cleared</div></div>
+    </div>
+  </div>
+
+  <div class="payout-box">
+    <h2>$50K Payout Tracker</h2>
+    <div class="h-sub">Split across four months. Tap a month when the payout lands.</div>
+    <div class="paybar-track"><div class="paybar-fill" id="payFill"></div></div>
+    <div class="pay-row"><span id="payDone">$0 banked</span><span>$50,000 goal</span></div>
+    <div class="pay-months" id="payMonths"></div>
+  </div>
+
+  <div class="grid" id="catGrid">
+    <div class="loading">Loading your progress...</div>
+  </div>
+
+  <div class="controls">
+    <div class="save-note">Progress saved <b>automatically</b> to this dashboard.</div>
+    <button class="reset" id="resetBtn">Reset all progress</button>
+  </div>
+
+  <footer>
+    Q3-Q4 2026 Trading Dashboard &middot; Rebuild framework: 1% risk, one eval at a time, discipline over speed.<br>
+    Not financial advice. Trading involves substantial risk of loss.
+  </footer>
+
+</div>
+
+<script>
+const CATEGORIES = [
+  {
+    id:"c1", cls:"c1", icon:"🎯", name:"Funding & Accounts",
+    goals:[
+      {id:"g1",  t:"Pass 5ers 100K for July",           d:"Cheapest, fastest cycle. Fund first.", amt:"Eval", k:"cost"},
+      {id:"g2",  t:"Get a 100K 5ers Account",           d:"Same ruleset as FTMO 100K.",          amt:"Eval", k:"cost"},
+      {id:"g3",  t:"Buy FTMO 200K Account",             d:"Use available discounts.",            amt:"$1,200", k:"cost", oblig:1200},
+      {id:"g4",  t:"Buy 5ers 250K 3-Step Bootcamp",     d:"Largest, funded last from profits.",  amt:"Eval", k:"cost"},
+      {id:"g5",  t:"Get FundedNext 200K Account",       d:"Diversify prop firm exposure.",       amt:"Eval", k:"cost"},
+      {id:"g6",  t:"Get Back 500K Total Funding",       d:"Full rebuild across the stack.",      amt:"$500K", k:"pos"},
+      {id:"g7",  t:"Pass 10x 150K Apex Futures",        d:"Paid by May. No correlated stacking.",amt:"1.5M", k:"pos"},
+    ]
+  },
+  {
+    id:"c2", cls:"c2", icon:"📈", name:"Payouts & Income",
+    goals:[
+      {id:"g8",  t:"Get Paid 50K+ From Props",          d:"Before year-end, 4-month split.",     amt:"$50K", k:"pos"},
+      {id:"g9",  t:"Get Apex Accounts Paid by May",     d:"Futures payout milestone.",           amt:"Paid", k:"pos"},
+    ]
+  },
+  {
+    id:"c3", cls:"c3", icon:"💰", name:"Obligations & Investments",
+    goals:[
+      {id:"g10", t:"Payout Eli & Sarah",               d:"$2,500 + $250 combined return.",      amt:"$2,750", k:"cost", oblig:2750},
+      {id:"g11", t:"Invest into Deriv Account",        d:"By October 2026.",                    amt:"$5,000", k:"cost", oblig:5000},
+      {id:"g12", t:"Pay Half School Fees Balance",     d:"Clear half the outstanding.",         amt:"$15K", k:"cost", oblig:15000},
+    ]
+  },
+  {
+    id:"c4", cls:"c4", icon:"🧠", name:"Strategy & Discipline",
+    goals:[
+      {id:"g13", t:"Q3-Q4 Goals & Targets Review",     d:"Formal progress checkpoint.",         amt:"Ongoing", k:""},
+      {id:"g14", t:"Adjust Goals to Circumstances",    d:"Re-evaluate as conditions change.",   amt:"Ongoing", k:""},
+      {id:"g15", t:"Re-evaluate Trading Strategy",     d:"Fix behavior before funding.",        amt:"Review", k:""},
+      {id:"g16", t:"Continue Journaling Daily",        d:"Feeds ML system, enforces honesty.",  amt:"Daily", k:"pos"},
+    ]
+  }
+];
+
+const PAYOUTS = [
+  {id:"sep", mo:"September", amt:12500},
+  {id:"oct", mo:"October",   amt:12500},
+  {id:"nov", mo:"November",  amt:12500},
+  {id:"dec", mo:"December",  amt:12500},
+];
+
+const STORE_KEY = "q3q4_dashboard_state_v1";
+let state = { goals:{}, payouts:{} };
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw){ state = JSON.parse(raw); }
+  }catch(e){ /* first run, no key yet */ }
+  if(!state.goals) state.goals = {};
+  if(!state.payouts) state.payouts = {};
+}
+
+function saveState(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+  catch(e){ console.error("save failed", e); }
+}
+
+function fmt(n){ return "$" + n.toLocaleString(); }
+
+function render(){
+  // categories
+  const grid = document.getElementById("catGrid");
+  grid.innerHTML = "";
+  CATEGORIES.forEach(cat=>{
+    const total = cat.goals.length;
+    const done = cat.goals.filter(g=>state.goals[g.id]).length;
+    const pct = total ? Math.round(done/total*100) : 0;
+    const el = document.createElement("div");
+    el.className = "cat " + cat.cls;
+    el.innerHTML = `
+      <div class="head">
+        <div class="badge">${cat.icon}</div>
+        <div><h2>${cat.name}</h2><div class="prog">${done} of ${total} complete</div></div>
+      </div>
+      <div class="catbar"><div class="f" style="width:${pct}%"></div></div>
+      <ul>
+        ${cat.goals.map(g=>`
+          <li class="goal ${state.goals[g.id]?'done':''}" data-id="${g.id}">
+            <div class="box">${state.goals[g.id]?'✓':''}</div>
+            <div class="g-body"><div class="t">${g.t}</div><div class="d">${g.d}</div></div>
+            <span class="g-amt ${g.k}">${g.amt}</span>
+          </li>`).join("")}
+      </ul>`;
+    grid.appendChild(el);
+  });
+
+  grid.querySelectorAll(".goal").forEach(li=>{
+    li.addEventListener("click", ()=>{
+      const id = li.dataset.id;
+      state.goals[id] = !state.goals[id];
+      saveState(); render();
+    });
+  });
+
+  // payouts
+  const pm = document.getElementById("payMonths");
+  pm.innerHTML = "";
+  PAYOUTS.forEach(p=>{
+    const on = !!state.payouts[p.id];
+    const d = document.createElement("div");
+    d.className = "pm " + (on?"on":"");
+    d.innerHTML = `<div class="mo">${p.mo}</div><div class="amt">${fmt(p.amt)}</div>
+      <div class="st">${on?'✓ Banked':'Pending'}</div>`;
+    d.addEventListener("click", ()=>{
+      state.payouts[p.id] = !state.payouts[p.id];
+      saveState(); render();
+    });
+    pm.appendChild(d);
+  });
+
+  // rollups
+  const paid = PAYOUTS.reduce((s,p)=> s + (state.payouts[p.id]?p.amt:0), 0);
+  const payGoal = 50000;
+  document.getElementById("payFill").style.width = Math.min(100, paid/payGoal*100) + "%";
+  document.getElementById("payDone").textContent = fmt(paid) + " banked";
+  document.getElementById("paidVal").textContent = fmt(paid);
+
+  let obl = 0;
+  CATEGORIES.forEach(c=>c.goals.forEach(g=>{ if(g.oblig && state.goals[g.id]) obl += g.oblig; }));
+  document.getElementById("oblVal").textContent = fmt(obl);
+
+  // overall ring
+  const allGoals = CATEGORIES.flatMap(c=>c.goals);
+  const totalItems = allGoals.length + PAYOUTS.length;
+  const doneItems = allGoals.filter(g=>state.goals[g.id]).length + PAYOUTS.filter(p=>state.payouts[p.id]).length;
+  const overall = totalItems ? Math.round(doneItems/totalItems*100) : 0;
+  const circ = 289;
+  document.getElementById("ringFill").style.strokeDashoffset = circ - (circ*overall/100);
+  document.getElementById("overallPct").textContent = overall + "%";
+  document.getElementById("overallLabel").textContent = `${doneItems} of ${totalItems} milestones complete`;
+}
+
+document.getElementById("resetBtn").addEventListener("click", ()=>{
+  state = { goals:{}, payouts:{} };
+  saveState();
+  render();
+});
+
+loadState();
+render();
+</script>
+</body>
+</html>
